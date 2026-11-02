@@ -78,44 +78,41 @@
   </div>
 
   <script>
-    // 三个零宽字符分别代表三进制 0 / 1 / 2
-    const zwMap = ['\u200B', '\u200C', '\u200D'];
+    // 微信会吞掉 U+200B，所以只用两个能存活的零宽字符做二进制
+    const ZERO = '\u200C';
+    const ONE = '\u200D';
 
-    // 每个 UTF-16 码元 -> 11 个三进制符号（3^11=177147 > 65535）
-    function textToCompressedDigits(text) {
-      const digits = [];
+    // 每个 UTF-16 码元 -> 16 位二进制
+    function textToBits(text) {
+      const bits = [];
       for (const ch of text) {
         let code = ch.charCodeAt(0);
-        const trits = [];
-        for (let i = 0; i < 11; i++) {
-          trits.push(code % 3);
-          code = Math.floor(code / 3);
+        for (let i = 15; i >= 0; i--) {
+          bits.push((code >> i) & 1);
         }
-        trits.reverse();
-        digits.push(...trits);
       }
-      return digits;
+      return bits;
     }
 
-    function compressedDigitsToText(digits) {
+    function bitsToText(bits) {
       let out = '';
-      for (let i = 0; i < digits.length; i += 11) {
-        const chunk = digits.slice(i, i + 11);
-        if (chunk.length < 11) break;
+      for (let i = 0; i < bits.length; i += 16) {
+        const chunk = bits.slice(i, i + 16);
+        if (chunk.length < 16) break;
         let code = 0;
-        for (const d of chunk) code = code * 3 + d;
+        for (const b of chunk) code = (code << 1) | b;
         out += String.fromCharCode(code);
       }
       return out;
     }
 
-    function extractStegoDigits(str) {
-      const digits = [];
+    function extractStegoBits(str) {
+      const bits = [];
       for (const ch of str) {
-        const idx = zwMap.indexOf(ch);
-        if (idx !== -1) digits.push(idx);
+        if (ch === ZERO) bits.push(0);
+        else if (ch === ONE) bits.push(1);
       }
-      return digits;
+      return bits;
     }
 
     function encryptText() {
@@ -123,8 +120,8 @@
       const cover = "哈基米";
       const encrypted = document.getElementById("encryptedText");
 
-      const digits = textToCompressedDigits(input);
-      const hidden = digits.map(d => zwMap[d]).join('');
+      const bits = textToBits(input);
+      const hidden = bits.map(b => b ? ONE : ZERO).join('');
       encrypted.value = cover + hidden;
 
       document.getElementById("copyTip").classList.add("hidden");
@@ -133,12 +130,12 @@
     function decryptText() {
       const input = document.getElementById("hashText").value;
       try {
-        const digits = extractStegoDigits(input);
-        if (digits.length === 0) {
+        const bits = extractStegoBits(input);
+        if (bits.length === 0) {
           document.getElementById("decryptedText").value = "没检测到零宽隐藏内容。可能是普通文字，或平台已经吞掉了零宽字符。";
           return;
         }
-        document.getElementById("decryptedText").value = compressedDigitsToText(digits);
+        document.getElementById("decryptedText").value = bitsToText(bits);
       } catch {
         document.getElementById("decryptedText").value = "提取失败，可能是隐写内容不完整。T^T";
       }
