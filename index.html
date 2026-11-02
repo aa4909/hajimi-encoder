@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>哈基米加密器</title>
+  <title>312寝室-哈基米加密器</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body {
@@ -38,82 +38,109 @@
 </head>
 <body class="bg-gradient-to-br from-gray-900 via-black to-gray-800 min-h-screen flex items-center justify-center px-4 py-10 text-white">
 
-  <div class="w-full max-w-4xl glass rounded-3xl p-6 md:p-10 space-y-10 shadow-2xl section-anim">
+  <div class="w-full max-w-4xl glass rounded-3xl p-6 md:p-10 space-y-8 shadow-2xl section-anim">
 
-    <h1 class="text-4xl md:text-5xl font-extrabold text-center text-indigo-400 tracking-widest">哈基米加密器</h1>
-    <p class="text-center text-gray-300 text-lg">哈基米密文 支持加密 & 解密</p>
+    <h1 class="text-4xl md:text-5xl font-extrabold text-center text-indigo-400 tracking-widest">312寝室-哈基米加密器</h1>
+    <p class="text-center text-gray-300 text-lg">表面只有“哈基米”，里面可以藏很多字</p>
 
     <!-- 原文输入 -->
     <div class="section-anim">
-      <label class="block text-lg mb-2 text-indigo-200">原文输入</label>
-      <textarea id="inputText" rows="4" class="w-full p-4 bg-black/30 border border-indigo-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none text-white placeholder-gray-400" placeholder="输入需要加密的文字..."></textarea>
-      <button onclick="encryptText()" class="mt-4 w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl glow-btn">加密</button>
+      <label class="block text-lg mb-2 text-indigo-200">原文</label>
+      <textarea id="inputText" rows="4" class="w-full p-4 bg-black/30 border border-indigo-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none text-white placeholder-gray-400" placeholder="输入需要隐藏的文字..."></textarea>
+      <button onclick="encryptText()" class="mt-4 w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl glow-btn">生成隐写文本</button>
     </div>
 
-    <!-- 加密结果 -->
+    <!-- 隐写结果 -->
     <div class="relative section-anim">
-      <label class="block text-lg mb-2 text-indigo-200">加密结果（哈基米密文）</label>
-      <textarea id="encryptedText" rows="4" class="w-full p-4 pr-24 bg-black/20 border border-indigo-400 rounded-xl resize-none text-indigo-200" readonly></textarea>
+      <label class="block text-lg mb-2 text-indigo-200">隐写结果</label>
+      <textarea id="encryptedText" rows="2" class="w-full p-4 pr-24 bg-black/20 border border-indigo-400 rounded-xl resize-none text-indigo-200" readonly></textarea>
       <button onclick="copyEncryptedText()" class="absolute top-10 right-4 px-3 py-1.5 bg-indigo-500 hover:bg-indigo-600 text-white text-sm rounded-md glow-btn">复制</button>
       <p id="copyTip" class="text-sm text-green-400 mt-2 hidden">已复制！^_^</p>
     </div>
 
-    <!-- 哈基米输入 -->
+    <!-- 粘贴隐写文本 -->
     <div class="section-anim">
-      <label class="block text-lg mb-2 text-green-200">输入哈基米密文</label>
-      <textarea id="hashText" rows="4" class="w-full p-4 bg-black/30 border border-green-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400 resize-none text-white placeholder-gray-400" placeholder="输入加密后的哈基米文本..."></textarea>
-      <button onclick="decryptText()" class="mt-4 w-full py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl glow-btn">解密</button>
+      <label class="block text-lg mb-2 text-green-200">粘贴隐写文本</label>
+      <textarea id="hashText" rows="2" class="w-full p-4 bg-black/30 border border-green-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400 resize-none text-white placeholder-gray-400" placeholder="粘贴看起来只有“哈基米”的文字..."></textarea>
+      <button onclick="decryptText()" class="mt-4 w-full py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl glow-btn">提取隐藏内容</button>
     </div>
 
     <!-- 解密结果 -->
     <div class="section-anim">
-      <label class="block text-lg mb-2 text-green-200">解密结果</label>
+      <label class="block text-lg mb-2 text-green-200">隐藏内容</label>
       <textarea id="decryptedText" rows="4" class="w-full p-4 bg-black/20 border border-green-400 rounded-xl resize-none text-green-200" readonly></textarea>
     </div>
 
     <!-- Footer -->
     <footer class="text-center text-sm text-gray-500 pt-6 border-t border-white/20">
-      Made with love by <a href="https://github.com/aa4909" target="_blank" class="text-indigo-400 hover:underline font-semibold">aa4909 on Github</a>
+      Made with love by <a href="https://github.com/aa4909" target="_blank" class="text-indigo-400 hover:underline font-semibold">aa4909 on Github</a> · 隐写版
     </footer>
   </div>
 
   <script>
-    const map = ['哈', '基', '米'];
+    // 三个零宽字符分别代表三进制 0 / 1 / 2
+    const zwMap = ['\u200B', '\u200C', '\u200D'];
 
-    function textToHajimi(text) {
-      return [...new TextEncoder().encode(text)]
-        .map(byte => byte.toString(3).padStart(6, '0'))
-        .join('')
-        .split('')
-        .map(d => map[parseInt(d)])
-        .join('');
+    // 每个 UTF-16 码元 -> 11 个三进制符号（3^11=177147 > 65535）
+    function textToCompressedDigits(text) {
+      const digits = [];
+      for (const ch of text) {
+        let code = ch.charCodeAt(0);
+        const trits = [];
+        for (let i = 0; i < 11; i++) {
+          trits.push(code % 3);
+          code = Math.floor(code / 3);
+        }
+        trits.reverse();
+        digits.push(...trits);
+      }
+      return digits;
     }
 
-    function hajimiToText(hjm) {
-      const reverseMap = { '哈': '0', '基': '1', '米': '2' };
-      let digits = hjm.split('').map(c => reverseMap[c]).join('');
-      let bytes = [];
-      for (let i = 0; i < digits.length; i += 6) {
-        let byteStr = digits.slice(i, i + 6);
-        if (byteStr.length < 6) break;
-        let byte = parseInt(byteStr, 3);
-        bytes.push(byte);
+    function compressedDigitsToText(digits) {
+      let out = '';
+      for (let i = 0; i < digits.length; i += 11) {
+        const chunk = digits.slice(i, i + 11);
+        if (chunk.length < 11) break;
+        let code = 0;
+        for (const d of chunk) code = code * 3 + d;
+        out += String.fromCharCode(code);
       }
-      return new TextDecoder().decode(new Uint8Array(bytes));
+      return out;
+    }
+
+    function extractStegoDigits(str) {
+      const digits = [];
+      for (const ch of str) {
+        const idx = zwMap.indexOf(ch);
+        if (idx !== -1) digits.push(idx);
+      }
+      return digits;
     }
 
     function encryptText() {
       const input = document.getElementById("inputText").value;
-      document.getElementById("encryptedText").value = textToHajimi(input);
+      const cover = "哈基米";
+      const encrypted = document.getElementById("encryptedText");
+
+      const digits = textToCompressedDigits(input);
+      const hidden = digits.map(d => zwMap[d]).join('');
+      encrypted.value = cover + hidden;
+
       document.getElementById("copyTip").classList.add("hidden");
     }
 
     function decryptText() {
       const input = document.getElementById("hashText").value;
       try {
-        document.getElementById("decryptedText").value = hajimiToText(input);
+        const digits = extractStegoDigits(input);
+        if (digits.length === 0) {
+          document.getElementById("decryptedText").value = "没检测到零宽隐藏内容。可能是普通文字，或平台已经吞掉了零宽字符。";
+          return;
+        }
+        document.getElementById("decryptedText").value = compressedDigitsToText(digits);
       } catch {
-        document.getElementById("decryptedText").value = "解密失败，可能是密文错误或不完整。T^T";
+        document.getElementById("decryptedText").value = "提取失败，可能是隐写内容不完整。T^T";
       }
     }
 
@@ -153,6 +180,6 @@
       tip.classList.remove("hidden");
       setTimeout(() => tip.classList.add("hidden"), 2000);
     }
-  </script><!--如果你看到了这一行，说明你可能正在研究这个网站是怎么写的，你很认真。顺便告诉你，这是我第2次发布。-->
-</body><!--因为该死的github将我原先的账户标记了，而我无法完成短信验证，所以只好重新注册这个账号-->
+  </script>
+</body>
 </html>
